@@ -109,6 +109,106 @@ uint32_t crc8::reflect(uint32_t data, uint8_t nBits)
 
 }   
 
+//该函数完成二进制数的异或  
+//result保存异或的结果，s1和s2为两个二进制串  
+char* strxor(char *result, const char *s1, const char *s2)  
+{  
+    int i=0;  
+    while(s1[i] && s2[i]){  
+        if(s1[i] != s2[i]){ //相异的时候为1  
+            result[i] = '1';  
+        }  
+        else{   //相同则为0  
+            result[i] = '0';  
+        }  
+        ++i;  
+    }  
+    result[i] = '\0';   //字符串结束  
+    return result;  
+}  
+
+//将字符串左移一位  
+//传入字符串本身，返回字符串本身  
+char* strlmv(char *s)  
+{  
+    int i=0;  
+    while(s[i]){  
+        s[i] = s[i+1];  //前一个等于后一个  
+        ++i;  
+    }  
+    return s;  
+}  
+
+void strm2div(const char *strM, const char *strP, char *strQ, char *strR)  
+{  
+    int lM = strlen(strM);  //被除数的长度  
+    int lP = strlen(strP);  //除数的长度  
+    int L = lM+lP;  //被除数和除数的总长  
+    int i;  //循环需要的  
+  
+    char *sM = new char[L+1];   //使用sM替换被除数，前lM个值为除数本身，后lP个值用0补上  
+  
+    for(i=0; i<L; ++i){  
+        if(i<lM){    //前lM个值为除数本身  
+            sM[i] = strM[i];  
+        }  
+        else{   //后lP个值用0补上  
+            sM[i] = '0';  
+        }  
+    }  
+    sM[i] = '\0';   //字符串结束  
+  
+    strncpy(strR, sM, lP);  //一开始余数照搬被除数  
+    strR[lP] = '\0';    //字符串结束  
+  
+    #if (SHOWPROCESS==1)    //如果需要显示计算过程的话  
+        cout<<strM<<'/'<<strP<<"的计算过程:"<<endl;  
+        cout<<sM<<endl;     //显示出被除数  
+    #endif  
+  
+    for(i=0; i<lM; ++i){  
+        #if (SHOWPROCESS==1)    //如果需要显示计算过程的话  
+            if(i!=0){   //第一次的话不用输出余数(已经除数了被除数了)  
+                repeat(' ', i);     //先重复打印i个空格进行对齐  
+                cout<<strR<<endl;   //打印余数  
+            }  
+        #endif  
+  
+        if(strR[0]=='1'){   //如果余数最高位为1  
+            #if (SHOWPROCESS==1)    //如果需要显示计算过程的话  
+                repeat(' ', i);     //先重复打印i个空格进行对齐  
+                cout<<strP<<endl;   //打印除数  
+            #endif  
+  
+            strxor(strR, strR, strP);   //余数与除数做异或，异或后的值直接更新到余数  
+            strQ[i] = '1';  //商1  
+        }  
+        else{   //如果余数高位为0  
+            #if (SHOWPROCESS==1)    //如果需要显示计算过程的话  
+                repeat(' ', i);     //打印i个空格  
+                repeat('0', lP);    //重复lP个0(因为余数高位为0)  
+                cout<<endl;  
+            #endif  
+              
+            //这里应该是与lP个0做异或，因为和0做异或等于本身，因此略去  
+            strQ[i] = '0';  //商0  
+        }  
+        strlmv(strR);   //把余数左移(最高位丢弃)  
+        strR[lP-1] = sM[lP+i];  //在末尾补上对应的被除数位  
+        strR[lP] = '\0';    //字符串结束  
+    }  
+    strR[lP-1] = '\0';      //余数只取前lP-1位(比除数P少一位)  
+    strQ[i] = '\0';     //字符串结束  
+  
+    #if (SHOWPROCESS==1)    //如果需要显示计算过程的话  
+        repeat(' ', i);     //先重复打印i个空格进行对齐  
+        cout<<strR<<endl;   //打印余数  
+    #endif  
+  
+    delete sM;  //回收空间  
+}  
+
+
 /*
 int main(){
     while(1){
