@@ -1,5 +1,8 @@
 #include "uart.hpp"
 
+static int ret;
+static int fd;
+
 ////////////////////////////////////////////////////////////////////////////////  
 /** 
 *@brief  设置串口通信速率 
@@ -117,3 +120,114 @@ int uart::set_Parity(int fd,int databits,int stopbits,int parity)
     options.c_oflag  &= ~OPOST;   /*Output*/  
     return (TRUE);    
 }  
+
+ssize_t uart::safe_read(int fd,char* vptr,size_t n)
+{
+    size_t nleft;
+    ssize_t nread;
+    char* ptr;
+
+    ptr=vptr;
+    nleft=n;
+
+    while(nleft > 0)
+    {
+        if((nread = read(fd,ptr,nleft)) < 0)
+        {
+            if(errno == EINTR)//被信号中断
+                nread = 0;
+            else
+                return -1;
+        }
+        else
+        if(nread == 0)
+            break;
+        nleft -= nread;
+        ptr += nread;
+    }
+    return (n-nleft);
+}
+
+ssize_t uart::safe_write(int fd, const char *vptr, size_t n)
+{
+    size_t  nleft;
+    ssize_t nwritten;
+    const char *ptr;
+
+    ptr = vptr;
+    nleft = n;
+
+    while(nleft > 0)
+    {
+    if((nwritten = write(fd, ptr, nleft)) <= 0)
+        {
+            if(nwritten < 0&&errno == EINTR)
+                nwritten = 0;
+            else
+                return -1;
+        }
+        nleft -= nwritten;
+        ptr   += nwritten;
+    }
+    return(n);
+}
+
+int uart::uart_read(int fd,char *r_buf,size_t len)
+{
+    ssize_t cnt = 0;
+    fd_set rfds;
+    struct timeval time;
+
+    /*将文件描述符加入读描述符集合*/
+    FD_ZERO(&rfds);
+    FD_SET(fd,&rfds);
+
+    /*设置超时为15s*/
+    time.tv_sec = 15;
+    time.tv_usec = 0;
+
+    /*实现串口的多路I/O*/
+    ret = select(fd+1,&rfds,NULL,NULL,&time);
+    switch(ret)
+    {
+        case -1:
+            fprintf(stderr,"select error!\n");
+            return -1;
+        case 0:
+            fprintf(stderr,"time over!\n");
+            return -1;
+        default:
+            cnt = safe_read(fd,r_buf,len);
+            if(cnt == -1)
+            {
+                fprintf(stderr,"read error!\n");
+                return -1;
+            }
+            return cnt;
+    }
+}
+
+int uart::uart_write(int fd,const char *w_buf,size_t len)
+{
+    ssize_t cnt = 0;
+
+    cnt = safe_write(fd,w_buf,len);
+    if(cnt == -1)
+    {
+        fprintf(stderr,"write error!\n");
+        return -1;
+    }
+
+    return cnt;
+}
+
+int uart::uart_close(int fd)
+{
+    assert(fd);
+    close(fd);
+
+    /*可以在这里做些清理工作*/
+
+    return 0;
+}
+

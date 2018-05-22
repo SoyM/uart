@@ -3,12 +3,13 @@
 
 using namespace std;
 
-#define BAUDRATE        2000000  
+#define BAUDRATE        9600  
 #define UART_DEVICE     "/dev/ttyUSB0"  
 
 #define FALSE  -1  
 #define TRUE   0
 
+#define BUF_SIZE 4
 
 int main(int argc, char *argv[])  
 {  
@@ -21,6 +22,10 @@ int main(int argc, char *argv[])
     uint8_t  polynominal8bit = 0x2F;
     uint8_t initValue = 0xFF;
     uint8_t xorValue = 0xFF;
+
+    static int ret;
+    char r_buf[BUF_SIZE];
+    bzero(r_buf,BUF_SIZE);
 
     crc.Crc8TableGenerator(polynominal8bit, crcTable8bit);
     //
@@ -55,10 +60,10 @@ int main(int argc, char *argv[])
         uint8_t message1[] = {velocity_linear, velocity_angular};
         uint8_t crc_value = crc.CalculateCRC8(crcTable8bit, message1, sizeof(message1), initValue, xorValue, false, false);
         printf("origin: %x, crc: %x\n", *velocity_la, crc_value);
-
-
+        //
+        //tx_data
+        //
         char tx_data[] = {0xFF , velocity_linear , velocity_angular , crc_value};
-
 
         uint32_t v;
         for(uint8_t i=0;i<4;i++){
@@ -74,22 +79,21 @@ int main(int argc, char *argv[])
 
             printf("write : %x   write_len : %d \n",(int)v, n);
             // perror("Failed to write to the output\n");
-  
         // }
 
-        char buf[4];
-        res = read(fd, buf, 4);  
-  
-        if(res==0)  
-            continue;  
-        buf[res]=0;  
-  
-        printf("data from serial : %x", *buf);  
-          
-        if (buf[0] == 0x0d)  
-            printf("\n");  
-          
-        if (buf[0] == '@') break;  
+        //
+        //read data
+        //
+        ret = uart.uart_read(fd,r_buf,BUF_SIZE);
+        if(ret == -1)
+        {
+            fprintf(stderr,"uart read failed!\n");
+            exit(EXIT_FAILURE);
+        }
+        printf("data from serial: %d \n",ret);
+        for(int i=0; i<ret; i++){
+            printf("%x",r_buf[i]);
+        }
     }  
     
     printf("Close...\n");  
