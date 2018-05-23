@@ -6,6 +6,7 @@
 // Good page for checking your CRC:
 // http://www.sunshine2k.de/coding/javascript/crc/crc_js.html
 
+using namespace std;
 
 void crc8::Crc8TableGenerator(uint8_t polynomial, uint8_t crcTable[256])
 {
@@ -139,7 +140,7 @@ char* strlmv(char *s)
     return s;  
 }  
 
-void strm2div(const char *strM, const char *strP, char *strQ, char *strR)  
+void crc8::strm2div(const char *strM, const char *strP, char *strQ, char *strR)  
 {  
     int lM = strlen(strM);  //被除数的长度  
     int lP = strlen(strP);  //除数的长度  
@@ -161,13 +162,14 @@ void strm2div(const char *strM, const char *strP, char *strQ, char *strR)
     strncpy(strR, sM, lP);  //一开始余数照搬被除数  
     strR[lP] = '\0';    //字符串结束  
   
-    #if (SHOWPROCESS==1)    //如果需要显示计算过程的话  
-        cout<<strM<<'/'<<strP<<"的计算过程:"<<endl;  
+    #if (SHOWPROCESS==1)      
+        // printf("\n-----  hex: %x /  hex:  %x  ----- sM: %x\n",*strM,*strP,*sM);
+        cout<< hex <<strM<<'/'<< hex << strP <<"的计算过程:"<<endl;  
         cout<<sM<<endl;     //显示出被除数  
     #endif  
   
     for(i=0; i<lM; ++i){  
-        #if (SHOWPROCESS==1)    //如果需要显示计算过程的话  
+        #if (SHOWPROCESS==1)   
             if(i!=0){   //第一次的话不用输出余数(已经除数了被除数了)  
                 repeat(' ', i);     //先重复打印i个空格进行对齐  
                 cout<<strR<<endl;   //打印余数  
@@ -175,7 +177,7 @@ void strm2div(const char *strM, const char *strP, char *strQ, char *strR)
         #endif  
   
         if(strR[0]=='1'){   //如果余数最高位为1  
-            #if (SHOWPROCESS==1)    //如果需要显示计算过程的话  
+            #if (SHOWPROCESS==1)      
                 repeat(' ', i);     //先重复打印i个空格进行对齐  
                 cout<<strP<<endl;   //打印除数  
             #endif  
@@ -208,6 +210,14 @@ void strm2div(const char *strM, const char *strP, char *strQ, char *strR)
     delete sM;  //回收空间  
 }  
 
+//重复n次打印字符c  
+//传入需要重复打印的字符c以及需要重复的次数  
+void crc8::repeat(char c, int n)  
+{  
+    while(n--){  
+        cout<<c;  //重复打印  
+    }  
+}
 
 /*
 int main(){
