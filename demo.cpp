@@ -82,11 +82,11 @@ int main(int argc, char *argv[])
                 v |= ((char)tx_data[3-i]&0xFFu)<<(i*8);  
         }
         // char* v = tx_data;
-        char p1_len = sizeof(v);
+        uint8_t p1_len = sizeof(v);
         printf("hex: 0x%x len: %u\n", v, p1_len);
 
         // for(uint8_t i=0;i < sizeof(tx_data);i++){
-        uint8_t n;
+        char n;
         n = write(fd, &v, 4);
 
         printf("write : %x   write_len : %d \n",(int)v, n);
