@@ -1,7 +1,48 @@
 #include "uart.hpp"
 
 static int ret;
-static int fd;
+    // volatile char velocity_linear = 0x01;
+    // volatile char velocity_angular = 0x02;
+
+    // crc_value = velocity_linear + velocity_angular;
+    // ///////////////////////////////////////////////////////////
+    // //write data to serial
+    // ///////////////////////////////////////////////////////////
+    // volatile char tx_data[] = {crc_value, velocity_angular, velocity_linear, 0xFF};
+    // //把 8 bit char 组合成 32 bit unsigned int
+    // uint32_t v;
+    // for(uint8_t i=0;i<4;i++){
+    //         v |= ((char)tx_data[3-i]&0xFFu)<<(i*8);  
+    // }
+    // // char* v = tx_data;
+    // uint8_t p1_len = sizeof(v);
+    // printf("hex: 0x%x len: %u\n", v, p1_len);
+
+int uart::set_velocity(char velocity_linear, char velocity_angular){
+    
+    if((int)velocity_linear<0 || (int)velocity_linear>99 || (int)velocity_angular<0 || (int)velocity_angular >99){
+        return -1;
+    }
+    char checksum = velocity_linear + velocity_angular;
+    printf("hhh: %d", (int)checksum);
+
+    std::string const& cc  = std::string("LY") + std::string(&velocity_linear) +std::string(&velocity_angular) + std::string(&checksum);
+
+    const char * v = cc.c_str();
+    printf("string : ");
+    for(int i=0;i<5;i++){
+        printf("%s",v+i);
+    }
+    
+    // const char* v = "LY123";
+
+
+    size_t len = 5;
+    int writed_len = uart_write(_fd, v, len);
+    printf("write_len : %d \n", writed_len);
+
+    return writed_len;
+}
 
 ////////////////////////////////////////////////////////////////////////////////  
 /** 
@@ -10,32 +51,23 @@ static int fd;
 *@param  speed  类型 int  串口速度 
 *@return  void 
 */  
-int speed_arr[] = {
-    B2000000 , B115200, B57600, B38400, B19200, B9600, B4800, B2400, B1200, B300,  
-    B2000000 , B115200, B57600, B38400, B19200, B9600, B4800, B2400, B1200, B300, 
-};  
-int name_arr[] = {
-    2000000,115200, 57600, 38400, 19200, 9600, 4800, 2400, 1200,  300,   
-    2000000,115200, 57600, 38400, 19200, 9600, 4800, 2400, 1200,  300, 
-};  
-void uart::set_speed(int fd, int speed){  
-  int   i;   
-  int   status;   
-  struct termios   Opt;  
-  tcgetattr(fd, &Opt);   
-  for ( i= 0;  i < sizeof(speed_arr) / sizeof(int);  i++) {   
-    if  (speed == name_arr[i]) {       
-      tcflush(fd, TCIOFLUSH);       
-      cfsetispeed(&Opt, speed_arr[i]);    
-      cfsetospeed(&Opt, speed_arr[i]);     
-      status = tcsetattr(fd, TCSANOW, &Opt);    
-      if  (status != 0) {          
-        perror("tcsetattr fd1");    
-        return;       
-      }      
-      tcflush(fd,TCIOFLUSH);     
-    }    
-  }  
+void uart::set_speed(int fd, int speed){ 
+    _fd = fd; 
+    int   i;   
+    int   status;   
+    struct termios   Opt;  
+    tcgetattr(fd, &Opt);   
+     
+    tcflush(fd, TCIOFLUSH);       
+    cfsetispeed(&Opt, speed);    
+    cfsetospeed(&Opt, speed);
+    //change now     
+    status = tcsetattr(fd, TCSANOW, &Opt);    
+    if  (status != 0) {          
+    perror("tcsetattr fd1");    
+    return;       
+    }      
+    tcflush(fd,TCIOFLUSH);     
 }  
 
 
@@ -161,7 +193,7 @@ ssize_t uart::safe_write(int fd, const char *vptr, size_t n)
     {
     if((nwritten = write(fd, ptr, nleft)) <= 0)
         {
-            if(nwritten < 0&&errno == EINTR)
+            if(nwritten < 0 && errno == EINTR)
                 nwritten = 0;
             else
                 return -1;
@@ -170,6 +202,20 @@ ssize_t uart::safe_write(int fd, const char *vptr, size_t n)
         ptr   += nwritten;
     }
     return(n);
+}
+
+int uart::uart_write(int fd,const char *w_buf,size_t len)
+{
+    ssize_t cnt = 0;
+
+    cnt = safe_write(fd,w_buf,len);
+    if(cnt == -1)
+    {
+        fprintf(stderr,"write error!\n");
+        return -1;
+    }
+
+    return cnt;
 }
 
 int uart::uart_read(int fd,char *r_buf,size_t len)
@@ -205,20 +251,6 @@ int uart::uart_read(int fd,char *r_buf,size_t len)
             }
             return cnt;
     }
-}
-
-int uart::uart_write(int fd,const char *w_buf,size_t len)
-{
-    ssize_t cnt = 0;
-
-    cnt = safe_write(fd,w_buf,len);
-    if(cnt == -1)
-    {
-        fprintf(stderr,"write error!\n");
-        return -1;
-    }
-
-    return cnt;
 }
 
 int uart::uart_close(int fd)

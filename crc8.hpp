@@ -23,3 +23,27 @@ class crc8
 };
 
 #endif
+
+    ///////////////////////////////////////////////////////////////////
+    //Crc8 Table Generator
+    ///////////////////////////////////////////////////////////////////
+    // crc8 crc;
+    // uint8_t crcTable8bit[256];
+    // uint8_t  polynominal8bit = 0x2F;
+    // uint8_t initValue = 0xFF;
+    // uint8_t xorValue = 0xFF;
+    // volatile static int ret;
+    // char r_buf[BUF_SIZE];
+    // crc.Crc8TableGenerator(polynominal8bit, crcTable8bit);
+
+    ///////////////////////////////////////////////////////////////////
+    //calculate value of crc with velocity_linear and velocity_angular
+    ///////////////////////////////////////////////////////////////////
+    // uint8_t crc_value;
+    // u_int16_t* velocity_la;
+    // u_int16_t velocity_la_value = ((char)velocity_angular & 0xFF) | (((char)velocity_linear & 0xFF)<<8);
+    // velocity_la = &velocity_la_value; 
+
+    // uint8_t message1[] = {velocity_linear, velocity_angular};
+    // crc_value = crc.CalculateCRC8(crcTable8bit, message1, sizeof(message1), initValue, xorValue, false, false);
+    // printf("origin: %x, crc: %x\n", *velocity_la, crc_value);

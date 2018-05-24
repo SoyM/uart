@@ -26,7 +26,10 @@ class uart{
         int uart_read(int fd,char *r_buf,size_t len);
         int uart_write(int fd,const char *w_buf,size_t len);
         int uart_close(int fd);
+        int set_velocity(char velocity_linear,char velocity_angular);
 
+    private:
+        int _fd;
 };
 
 
