@@ -14,16 +14,20 @@
 #include<errno.h>
 #include<assert.h>
 
+#define BUF_SIZE 5
+
 class uart{
     public:
         int _fd;
         uart(const char* uartbus,int baudrate);
         int set_speed(int speed);
         int set_Parity(int databits,int stopbits,int parity);
+        
         int uart_read(char *r_buf,size_t len);
         int uart_write(const char *w_buf,size_t len);
         int uart_close(int fd);
         int set_velocity(char velocity_linear,char velocity_angular);
+        int get_velocity();
 
     private:
         int ret;

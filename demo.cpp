@@ -1,48 +1,39 @@
 #include "uart.hpp"
 #include <string.h>  
 #include <stdio.h>  
+#include <thread>
 #include <fcntl.h> 
 
 using namespace std;
 
-#define SHOWDEBUG   1
+#define SHOWDEBUG   1UI
 #define BAUDRATE        B57600  
 #define UART_DEVICE    "ttyUSB0"
 
+void read_uart(){
+    uart uart(UART_DEVICE, BAUDRATE);
+    while(1){
+        cout<<"get_velocity: "<<uart.get_velocity()<<endl;
+    }
+}
 
-#define BUF_SIZE 255
 
-
-int main(int argc, char *argv[])  
+int main()  
 {   
-    //open uart
-    int fd, c=0, res; 
+    thread th1(read_uart);
+    // th1.join();
 
     uart uart(UART_DEVICE, BAUDRATE);
 
-
     printf("Open...\n"); 
 
-    while(1) {
-
-        int velocity_linear;
-        cin>>velocity_linear;
-        uart.set_velocity(velocity_linear, 2);
-        
-
-        char r_buf[BUF_SIZE+1];
-        int ret = read(uart._fd, r_buf, BUF_SIZE);
-
-        // int ret = uart.uart_read(r_buf, 255);
-        printf("read form serial:\t len: %lu \t char:",sizeof(r_buf));
-        for(char i=0;i<sizeof(r_buf);i++){
-            printf("%c",r_buf[i]);
-        }
-        printf("\n");
-    }  
     
+    for(char m = -128; m < 127; m++){
+        for(char n = -128; n < 127; n++){
+                uart.set_velocity(m, n);
+        }
+    }
+
     printf("Close...\n");  
-    close(fd);  
-  
     return 0;  
 }  

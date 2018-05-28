@@ -132,35 +132,50 @@ int uart::set_Parity(int databits,int stopbits,int parity)
 
 
 int uart::set_velocity(char velocity_linear, char velocity_angular){
-    u_char u_velocity_linear;
-    u_char u_velocity_angular;
-    u_velocity_linear = velocity_linear + 128;
-    u_velocity_angular = velocity_angular +128;
-    std::cout<<"velocity_linear : "<<(int)u_velocity_linear<<std::endl;
 
-    // std::cout<<"velocity_linear : "<<(int)u_velocity_linear<<std::endl;
-    char checksum = u_velocity_linear + u_velocity_angular;
+    char checksum = velocity_linear + velocity_angular;
+    // printf("checksum: %d",(int)checksum);
+    char tx_value[6];
+
+    tx_value[0] = 'L';
+    tx_value[1] = 'Y';
+    tx_value[2] = velocity_linear;
+    tx_value[3] = velocity_angular;
+    tx_value[4] = checksum;
+    // printf("checksum:%d",(int)checksum);
 
     //sprintf 拼接法
-    char tx_value[9];
-    sprintf(tx_value, "LY%c%c%c", u_velocity_linear, u_velocity_angular, checksum);
-    printf("sprintf : ");
-    for(int i=0;i<9;i++){
-        printf("%c",tx_value[i]);
-    }
-
+    // sprintf(tx_value, "LY%c%c%c", u_velocity_linear, u_velocity_angular, checksum);
     //std::string 拼接法 （u_char 拼接不能）
     // std::string const& cc  = std::string("LY") + std::string(&velocity_linear) +std::string(&velocity_angular) + std::string(&checksum);
     // const char * v = cc.c_str();
     // printf("\ntx_data : ");
     // printf("%s",v);
 
-    size_t len = 8;
-    int writed_len = uart_write(tx_value, len);
-    printf("\nwrite_len : %d \n", writed_len);
+    int writed_len = uart_write(tx_value, BUF_SIZE);
+    // printf("\nwrite_len : %d \n", writed_len);
 
     return writed_len;
 }
+
+int uart::get_velocity(){
+    char r_buf[BUF_SIZE];
+    // int success_count = 0;
+    // int fail_count = 0;
+    int ret = uart_read(r_buf, BUF_SIZE);
+    // std::cout<<"read_len:"<<ret<<std::endl;
+    // for(char i=0;i<BUF_SIZE;i++){
+    //     printf("%c",r_buf[i]);
+    // }
+    // printf("\n");
+    if((r_buf[0]=='L') && (r_buf[1]=='Y') && (r_buf[2]==0) && (r_buf[3]==r_buf[4])){
+
+        return r_buf[3];
+    }else{
+        // return -1;
+    } 
+}
+
 
 ssize_t uart::safe_read(char* vptr,size_t n)
 {
@@ -261,6 +276,7 @@ int uart::uart_write(const char *w_buf,size_t len)
 
     return cnt;
 }
+
 
 int uart::uart_close(int fd)
 {
