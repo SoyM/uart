@@ -159,11 +159,10 @@ int uart::set_velocity(char velocity_linear, char velocity_angular){
 }
 
 int uart::get_velocity(){
+
     char r_buf[BUF_SIZE];
-    // int success_count = 0;
-    // int fail_count = 0;
     int ret = uart_read(r_buf, BUF_SIZE);
-    std::cout<<"read_len:"<<ret<<std::endl;
+    // std::cout<<"read_len:"<<ret<<std::endl;
     // if(ret != -1){
     //     for(char i = 0; i < BUF_SIZE; i++){
     //         printf("%c",r_buf[i]);
@@ -179,7 +178,7 @@ int uart::get_velocity(){
 
         return r_buf[3];
     }else{
-        return 257;
+        // return 257;
     } 
 }
 
