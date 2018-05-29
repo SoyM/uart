@@ -163,16 +163,23 @@ int uart::get_velocity(){
     // int success_count = 0;
     // int fail_count = 0;
     int ret = uart_read(r_buf, BUF_SIZE);
-    // std::cout<<"read_len:"<<ret<<std::endl;
-    // for(char i=0;i<BUF_SIZE;i++){
-    //     printf("%c",r_buf[i]);
+    std::cout<<"read_len:"<<ret<<std::endl;
+    // if(ret != -1){
+    //     for(char i = 0; i < BUF_SIZE; i++){
+    //         printf("%c",r_buf[i]);
+    //     }
+    //     printf("r_buf[2]: %d",(int)r_buf[2]);
+    //     printf("r_buf[3]: %d",(int)r_buf[3]);
+    //     printf("%d",(int)r_buf[4]);
+    //     printf("\n");
     // }
-    // printf("\n");
+
+    
     if((r_buf[0]=='L') && (r_buf[1]=='Y') && (r_buf[2]==0) && (r_buf[3]==r_buf[4])){
 
         return r_buf[3];
     }else{
-        // return -1;
+        return 257;
     } 
 }
 
@@ -188,7 +195,7 @@ ssize_t uart::safe_read(char* vptr,size_t n)
 
     while(nleft > 0)
     {
-        if((nread = read(_fd,ptr,nleft)) < 0)
+        if((nread = read(_fd, ptr, nleft)) < 0)
         {
             if(errno == EINTR)//被信号中断
                 nread = 0;
@@ -214,8 +221,8 @@ int uart::uart_read(char *r_buf,size_t len)
     FD_ZERO(&rfds);
     FD_SET(_fd,&rfds);
 
-    /*设置超时为15s*/
-    time.tv_sec = 15;
+    
+    time.tv_sec = 0;
     time.tv_usec = 0;
 
     /*实现串口的多路I/O*/
@@ -223,10 +230,10 @@ int uart::uart_read(char *r_buf,size_t len)
     switch(ret)
     {
         case -1:
-            fprintf(stderr,"select error!\n");
+            fprintf(stderr, "select error!\n");
             return -1;
         case 0:
-            fprintf(stderr,"time over!\n");
+            fprintf(stderr, "time over!\n");
             return -1;
         default:
             cnt = safe_read(r_buf,len);
