@@ -23,12 +23,12 @@ uart::uart(const char* uartbus,int baudrate){
 
 ////////////////////////////////////////////////////////////////////////////////  
 /** 
-*@brief  设置串口通信速率 
+*@brief  set speed of uart
 *@param  fd     类型 int  打开串口的文件句柄 
 *@param  speed  类型 int  串口速度 
 *@return  int 
 */  
-int uart::set_speed(int speed){ 
+ssize_t uart::set_speed(int speed){ 
     int   i;   
     int   status;   
     struct termios   Opt;  
@@ -55,7 +55,7 @@ int uart::set_speed(int speed){
 *@param  stopbits 类型  int 停止位   取值为 1 或者2 
 *@param  parity  类型  int  效验类型 取值为N,E,O,,S 
 */  
-int uart::set_Parity(int databits,int stopbits,int parity)  
+ssize_t uart::set_Parity(int databits,int stopbits,int parity)  
 {   
     struct termios options;   
     if  ( tcgetattr(_fd,&options)  !=  0) {   
@@ -131,7 +131,7 @@ int uart::set_Parity(int databits,int stopbits,int parity)
 }  
 
 
-int uart::set_velocity(char velocity_linear, char velocity_angular){
+ssize_t uart::set_velocity(char velocity_linear, char velocity_angular){
 
     char checksum = velocity_linear + velocity_angular;
     // printf("checksum: %d",(int)checksum);
@@ -158,27 +158,28 @@ int uart::set_velocity(char velocity_linear, char velocity_angular){
     return writed_len;
 }
 
-int uart::get_velocity(){
+ssize_t uart::get_velocity(){
 
-    char r_buf[BUF_SIZE];
+    char r_buf[BUF_SIZE+1];
     int ret = uart_read(r_buf, BUF_SIZE);
-    // std::cout<<"read_len:"<<ret<<std::endl;
-    // if(ret != -1){
-    //     for(char i = 0; i < BUF_SIZE; i++){
-    //         printf("%c",r_buf[i]);
-    //     }
-    //     printf("r_buf[2]: %d",(int)r_buf[2]);
-    //     printf("r_buf[3]: %d",(int)r_buf[3]);
-    //     printf("%d",(int)r_buf[4]);
-    //     printf("\n");
-    // }
 
-    
+    std::cout<<"read_len:"<<ret<<std::endl;
+    if(ret != -1){
+        for(char i = 0; i < BUF_SIZE; i++){
+            printf("%c",r_buf[i]);
+        }
+        printf("\n");
+        printf("r_buf[2]: %d\n",(int)r_buf[2]);
+        printf("r_buf[3]: %d\n",(int)r_buf[3]);
+        printf("r_buf[4]: %d\n",(int)r_buf[4]);   
+    }
+
+    // if((r_buf[0]=='L') && (r_buf[1]=='Y') && (r_buf[4] == r_buf[2] + r_buf[3])){
     if((r_buf[0]=='L') && (r_buf[1]=='Y') && (r_buf[2]==0) && (r_buf[3]==r_buf[4])){
 
         return r_buf[3];
     }else{
-        // return 257;
+        return 257;
     } 
 }
 
@@ -210,7 +211,7 @@ ssize_t uart::safe_read(char* vptr,size_t n)
     return (n-nleft);
 }
 
-int uart::uart_read(char *r_buf,size_t len)
+ssize_t uart::uart_read(char *r_buf,size_t len)
 {
     ssize_t cnt = 0;
     fd_set rfds;
@@ -269,7 +270,7 @@ ssize_t uart::safe_write(const char *vptr, size_t n)
     return n;
 }
 
-int uart::uart_write(const char *w_buf,size_t len)
+ssize_t uart::uart_write(const char *w_buf,size_t len)
 {
     ssize_t cnt = 0;
 
@@ -284,7 +285,7 @@ int uart::uart_write(const char *w_buf,size_t len)
 }
 
 
-int uart::uart_close(int fd)
+ssize_t uart::uart_close(int fd)
 {
     assert(fd);
     close(fd);

@@ -5,7 +5,7 @@
 
 using namespace std;
 
-#define SHOWDEBUG   1UI
+#define SHOWDEBUG   1
 #define BAUDRATE        B57600  
 #define UART_DEVICE    "ttyUSB0"
 
@@ -19,11 +19,7 @@ int main()
     int count = 0;
     int count_2 = 0;
 
-    for(char m = 1; m < 5; m++){
-        for(char n = 1; n < 5; n++){
-            uart.set_velocity(m, n);
-        }
-    }
+
 
     for(char m = -128; m < 127; m++){
         for(char n = -128; n < 127; n++){
@@ -38,7 +34,7 @@ int main()
 
             // struct timeval delay;  
             // delay.tv_sec = 0;  
-            // delay.tv_usec = 10 * 1000; // 10 ms  
+            // delay.tv_usec = 10*1000 ; // 10 ms  
             // select(0, NULL, NULL, NULL, &delay);
         }
     }

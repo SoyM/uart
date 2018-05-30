@@ -20,14 +20,14 @@ class uart{
     public:
         int _fd;
         uart(const char* uartbus,int baudrate);
-        int set_speed(int speed);
-        int set_Parity(int databits,int stopbits,int parity);
+        ssize_t set_speed(int speed);
+        ssize_t set_Parity(int databits,int stopbits,int parity);
         
-        int uart_read(char *r_buf,size_t len);
-        int uart_write(const char *w_buf,size_t len);
-        int uart_close(int fd);
-        int set_velocity(char velocity_linear,char velocity_angular);
-        int get_velocity();
+        ssize_t uart_read(char *r_buf,size_t len);
+        ssize_t uart_write(const char *w_buf,size_t len);
+        ssize_t uart_close(int fd);
+        ssize_t set_velocity(char velocity_linear,char velocity_angular);
+        ssize_t get_velocity();
 
     private:
         int ret;
