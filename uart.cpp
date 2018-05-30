@@ -1,4 +1,9 @@
 #include "uart.hpp"
+#include <termios.h>  
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
 
 uart::uart(const char* uartbus,int baudrate){
     char uart_device[64];
@@ -16,7 +21,7 @@ uart::uart(const char* uartbus,int baudrate){
     }  
     //set parity of uart
     if (set_Parity(8,1,'N') == -1)  {  
-        printf("Set Parity Error\n");  
+        perror("Set Parity Error\n");  
         exit (0);  
     }
 }
@@ -28,9 +33,8 @@ uart::uart(const char* uartbus,int baudrate){
 *@param  speed  类型 int  串口速度 
 *@return  int 
 */  
-ssize_t uart::set_speed(int speed){ 
-    int   i;   
-    int   status;   
+ssize_t uart::set_speed(int speed){    
+    ssize_t  status;   
     struct termios   Opt;  
     tcgetattr(_fd, &Opt);   
      
@@ -132,6 +136,13 @@ ssize_t uart::set_Parity(int databits,int stopbits,int parity)
 
 
 ssize_t uart::set_velocity(char velocity_linear, char velocity_angular){
+    // 串口传输的字符跳过 L 
+    if(velocity_linear == 76){
+        velocity_linear = 77;
+    }
+    if(velocity_angular == 76){
+        velocity_angular = 77;
+    }
 
     char checksum = velocity_linear + velocity_angular;
     // printf("checksum: %d",(int)checksum);
@@ -160,27 +171,58 @@ ssize_t uart::set_velocity(char velocity_linear, char velocity_angular){
 
 ssize_t uart::get_velocity(){
 
-    char r_buf[BUF_SIZE+1];
-    int ret = uart_read(r_buf, BUF_SIZE);
+    
+    char r_buf[1];
+    // int ret = uart_read(r_buf, 1);
 
-    std::cout<<"read_len:"<<ret<<std::endl;
-    if(ret != -1){
-        for(char i = 0; i < BUF_SIZE; i++){
-            printf("%c",r_buf[i]);
+    for(int i = 0;i < 15; i++){
+        int ret = uart_read(r_buf, 1);
+        // printf("%c",r_buf[0]); 
+        if(r_buf[0] == 'L'){
+            uart_read(r_buf, 1);
+            if(r_buf[0] == 'Y'){
+                uart_read(r_buf, 1);
+                char velocity_linear = r_buf[0];
+                // printf("r_buf: %d\n",(int)r_buf[0]); 
+                uart_read(r_buf, 1);
+                char velocity_angular = r_buf[0];
+                // printf("r_buf: %d\n",(int)r_buf[0]); 
+                uart_read(r_buf, 1);
+                char checksum = r_buf[0];
+                // printf("r_buf: %d\n",(int)r_buf[0]); 
+                if((velocity_linear == 0) && (velocity_angular == checksum)){
+                    return checksum;
+                }
+            }
         }
-        printf("\n");
-        printf("r_buf[2]: %d\n",(int)r_buf[2]);
-        printf("r_buf[3]: %d\n",(int)r_buf[3]);
-        printf("r_buf[4]: %d\n",(int)r_buf[4]);   
+
+
     }
 
-    // if((r_buf[0]=='L') && (r_buf[1]=='Y') && (r_buf[4] == r_buf[2] + r_buf[3])){
-    if((r_buf[0]=='L') && (r_buf[1]=='Y') && (r_buf[2]==0) && (r_buf[3]==r_buf[4])){
+    return 257;
 
-        return r_buf[3];
-    }else{
-        return 257;
-    } 
+    // char r_buf[BUF_SIZE+1];
+    // int ret = uart_read(r_buf, BUF_SIZE);
+
+    // std::cout<<"read_len:"<<ret<<std::endl;
+    // if(ret != -1){
+    //     for(char i = 0; i < BUF_SIZE; i++){
+    //         printf("%c",r_buf[i]);
+    //     }
+    //     printf("\n");
+    //     printf("r_buf[2]: %d\n",(int)r_buf[2]);
+    //     printf("r_buf[3]: %d\n",(int)r_buf[3]);
+    //     printf("r_buf[4]: %d\n",(int)r_buf[4]);   
+    // }
+
+    // // if((r_buf[0]=='L') && (r_buf[1]=='Y') && (r_buf[4] == r_buf[2] + r_buf[3])){
+    // if((r_buf[0]=='L') && (r_buf[1]=='Y') && (r_buf[2]==0) && (r_buf[3]==r_buf[4])){
+
+    //     return r_buf[3];
+    // }else{
+    //     return 257;
+    // } 
+
 }
 
 
@@ -202,9 +244,9 @@ ssize_t uart::safe_read(char* vptr,size_t n)
             else
                 return -1;
         }
-        else
-        if(nread == 0)
+        else if(nread == 0){
             break;
+        }       
         nleft -= nread;
         ptr += nread;
     }
@@ -223,7 +265,7 @@ ssize_t uart::uart_read(char *r_buf,size_t len)
 
     
     time.tv_sec = 0;
-    time.tv_usec = 0;
+    time.tv_usec = 174;
 
     /*实现串口的多路I/O*/
     ret = select(_fd+1,&rfds,NULL,NULL,&time);
@@ -233,7 +275,7 @@ ssize_t uart::uart_read(char *r_buf,size_t len)
             fprintf(stderr, "select error!\n");
             return -1;
         case 0:
-            fprintf(stderr, "time over!\n");
+            // fprintf(stderr, "time over!\n");
             return -1;
         default:
             cnt = safe_read(r_buf,len);
@@ -259,10 +301,14 @@ ssize_t uart::safe_write(const char *vptr, size_t n)
     {
     if((nwritten = write(_fd, ptr, nleft)) <= 0)
         {
-            if(nwritten < 0 && errno == EINTR)
+            if(nwritten < 0 && errno == EINTR){
                 nwritten = 0;
-            else
+                break;
+            }
+            else{
                 return -1;
+            }
+                
         }
         nleft -= nwritten;
         ptr   += nwritten;
@@ -287,7 +333,7 @@ ssize_t uart::uart_write(const char *w_buf,size_t len)
 
 ssize_t uart::uart_close(int fd)
 {
-    assert(fd);
+    // assert(fd);
     close(fd);
 
     /*可以在这里做些清理工作*/

@@ -1,7 +1,8 @@
 #include "uart.hpp"
-#include <string.h>  
-#include <stdio.h>  
-#include <fcntl.h> 
+#include <stdio.h>   
+#include <iostream>
+#include <termios.h>  
+#include <fcntl.h>
 
 using namespace std;
 
@@ -28,13 +29,18 @@ int main()
             int get_velocity = uart.get_velocity();
             if(get_velocity != 257){
                 count_2++;
+                cout<<"get_velocity: "<< get_velocity <<endl;
             }
-            cout<<"get_velocity: "<< get_velocity <<endl;
+            
             count++;
+
+            if(count == 10000){
+                return 0;
+            }
 
             // struct timeval delay;  
             // delay.tv_sec = 0;  
-            // delay.tv_usec = 10*1000 ; // 10 ms  
+            // delay.tv_usec = 8*1000 ; // 10 ms  
             // select(0, NULL, NULL, NULL, &delay);
         }
     }
